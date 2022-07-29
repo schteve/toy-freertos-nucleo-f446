@@ -33,7 +33,7 @@ fn main() {
     let mut b = freertos_cargo_build::Builder::new();
 
     // Path to FreeRTOS kernel or set ENV "FREERTOS_SRC" instead
-    b.freertos("src/FreeRTOS-Kernel");
+    b.freertos("import/FreeRTOS-Kernel");
     b.freertos_config("src"); // Location of `FreeRTOSConfig.h`
     b.freertos_port("GCC/ARM_CM3".to_string()); // Port dir relative to 'FreeRTOS-Kernel/portable'
     b.heap::<String>("heap_4.c".to_string()); // Set the heap_?.c allocator to use from
