@@ -8,26 +8,41 @@ use core::alloc::Layout;
 use cortex_m::asm;
 use cortex_m_rt::{entry, exception};
 use freertos_rust::*;
+use nucleo_f446re::led::LedDigital;
 use panic_probe as _;
+use stm32f4xx_hal::prelude::*;
 
 #[global_allocator]
 static GLOBAL: FreeRtosAllocator = FreeRtosAllocator;
 
 #[entry]
 fn main() -> ! {
-    asm::nop(); // To not have main optimize to abort in release mode, remove when you add code
+    let dp = stm32f4xx_hal::pac::Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc
+        .cfgr
+        .use_hse(8.MHz())
+        .bypass_hse_oscillator()
+        .sysclk(180.MHz())
+        .hclk(180.MHz())
+        .freeze();
 
-    /*let h = Task::new().name("hello").stack_size(512).priority(TaskPriority(1)).start(|_this_task| {
-        // Blink forever
-        do_blink();
-        loop {
+    let gpioa = dp.GPIOA.split();
+    let mut user_led = LedDigital::new(gpioa.pa5);
+    let mut timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescalar would need to be too large
 
-        }
-    }).unwrap();
+    let _h = Task::new()
+        .name("blink")
+        .stack_size(512)
+        .priority(TaskPriority(1))
+        .start(move || loop {
+            user_led.toggle();
+            timer.start(500.millis()).unwrap();
+            nb::block!(timer.wait()).unwrap();
+        })
+        .unwrap();
 
-    FreeRtosUtils::start_scheduler();*/
-
-    loop {}
+    FreeRtosUtils::start_scheduler();
 }
 
 // Define what happens in an Out Of Memory (OOM) condition
