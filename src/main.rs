@@ -5,7 +5,6 @@
 #![feature(alloc_error_handler)]
 
 use core::alloc::Layout;
-use cortex_m::asm;
 use cortex_m_rt::{entry, exception};
 use freertos_rust::*;
 use nucleo_f446re::led::LedDigital;
@@ -54,9 +53,8 @@ fn alloc_error(layout: Layout) -> ! {
 #[allow(clippy::empty_loop)]
 #[allow(non_snake_case)]
 #[exception]
-unsafe fn DefaultHandler(_irqn: i16) {
-    asm::bkpt();
-    loop {}
+unsafe fn DefaultHandler(irqn: i16) -> ! {
+    panic!("Unhandled IRQ: {}", irqn);
 }
 
 #[allow(non_snake_case)]
