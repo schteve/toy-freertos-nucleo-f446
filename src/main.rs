@@ -14,19 +14,23 @@ static GLOBAL: FreeRtosAllocator = FreeRtosAllocator;
 
 // define what happens in an Out Of Memory (OOM) condition
 #[alloc_error_handler]
+#[allow(clippy::empty_loop)]
 fn alloc_error(_layout: Layout) -> ! {
     asm::bkpt();
     loop {}
 }
 
+#[allow(clippy::empty_loop)]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     asm::bkpt();
     loop {}
 }
 
+#[allow(clippy::empty_loop)]
+#[allow(non_snake_case)]
 #[exception]
-unsafe fn DefaultHandler(irqn: i16) {
+unsafe fn DefaultHandler(_irqn: i16) {
     asm::bkpt();
     loop {}
 }
@@ -48,20 +52,18 @@ fn main() -> ! {
     loop {}
 }
 
-fn test_function(arg: i32) -> i32 {
-    let mut temp: f64 = arg as f64;
-    temp = temp * 3.1415;
-    temp as i32
-}
-
+#[allow(non_snake_case)]
 #[no_mangle]
 fn vApplicationMallocFailedHook() {}
 
+#[allow(non_snake_case)]
 #[no_mangle]
 fn vApplicationIdleHook() {}
 
+#[allow(non_snake_case)]
 #[no_mangle]
-fn vApplicationStackOverflowHook(pxTask: FreeRtosTaskHandle, pcTaskName: FreeRtosCharPtr) {}
+fn vApplicationStackOverflowHook(_pxTask: FreeRtosTaskHandle, _pcTaskName: FreeRtosCharPtr) {}
 
+#[allow(non_snake_case)]
 #[no_mangle]
 fn vApplicationTickHook() {}
