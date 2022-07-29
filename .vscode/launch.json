@@ -13,7 +13,7 @@
                 "interface/stlink.cfg",
                 "target/stm32f4x.cfg"
             ],
-            "runToMain": true,
+            "runToEntryPoint": "main",
         }
     ]
 }
