@@ -9,6 +9,7 @@
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "build",
             "executable": "./target/thumbv7em-none-eabi/debug/toy-freertos-nucleo-f446",
+            // "gdbPath": "gdb-multiarch", // Only for platforms where arm-none-eabi-gdb doesn't exist
             "runToEntryPoint": "main",
             "device": "STM32F446VET6",
             "configFiles": [
