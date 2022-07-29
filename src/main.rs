@@ -4,36 +4,14 @@
 #![feature(lang_items)]
 #![feature(alloc_error_handler)]
 
-use core::{alloc::Layout, panic::PanicInfo};
+use core::alloc::Layout;
 use cortex_m::asm;
 use cortex_m_rt::{entry, exception};
 use freertos_rust::*;
+use panic_probe as _;
 
 #[global_allocator]
 static GLOBAL: FreeRtosAllocator = FreeRtosAllocator;
-
-// define what happens in an Out Of Memory (OOM) condition
-#[alloc_error_handler]
-#[allow(clippy::empty_loop)]
-fn alloc_error(_layout: Layout) -> ! {
-    asm::bkpt();
-    loop {}
-}
-
-#[allow(clippy::empty_loop)]
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    asm::bkpt();
-    loop {}
-}
-
-#[allow(clippy::empty_loop)]
-#[allow(non_snake_case)]
-#[exception]
-unsafe fn DefaultHandler(_irqn: i16) {
-    asm::bkpt();
-    loop {}
-}
 
 #[entry]
 fn main() -> ! {
@@ -49,6 +27,20 @@ fn main() -> ! {
 
     FreeRtosUtils::start_scheduler();*/
 
+    loop {}
+}
+
+// Define what happens in an Out Of Memory (OOM) condition
+#[alloc_error_handler]
+fn alloc_error(layout: Layout) -> ! {
+    panic!("Alloc error, size: {}", layout.size());
+}
+
+#[allow(clippy::empty_loop)]
+#[allow(non_snake_case)]
+#[exception]
+unsafe fn DefaultHandler(_irqn: i16) {
+    asm::bkpt();
     loop {}
 }
 
