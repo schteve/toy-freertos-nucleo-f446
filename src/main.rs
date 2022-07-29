@@ -28,7 +28,7 @@ fn main() -> ! {
 
     let gpioa = dp.GPIOA.split();
     let mut user_led = LedDigital::new(gpioa.pa5);
-    let mut timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescalar would need to be too large
+    let mut timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescaler would need to be too large
 
     let _h = Task::new()
         .name("blink")
