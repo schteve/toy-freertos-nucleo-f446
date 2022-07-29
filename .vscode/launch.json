@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceRoot}",
+            "executable": "./target/thumbv7em-none-eabi/debug/toy-freertos-nucleo-f446",
+            "name": "Debug (OpenOCD)",
+            "device": "STM32F446VET6",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "runToMain": true,
+        }
+    ]
+}
