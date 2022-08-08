@@ -7,9 +7,12 @@
 use core::alloc::Layout;
 use cortex_m_rt::{entry, exception};
 use freertos_rust::*;
-use nucleo_f446re::led::LedDigital;
+use nucleo_f446re::{button::Button, led::LedDigital};
 use panic_probe as _;
 use stm32f4xx_hal::prelude::*;
+
+mod task_blink;
+mod task_button;
 
 #[global_allocator]
 static GLOBAL: FreeRtosAllocator = FreeRtosAllocator;
@@ -27,19 +30,27 @@ fn main() -> ! {
         .freeze();
 
     let gpioa = dp.GPIOA.split();
-    let mut user_led = LedDigital::new(gpioa.pa5);
-    let mut timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescaler would need to be too large
+    let gpioc = dp.GPIOC.split();
 
-    let _h = Task::new()
+    let user_led = LedDigital::new(gpioa.pa5);
+    let user_button = Button::new(gpioc.pc13);
+    let _timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescaler would need to be too large
+
+    Task::new()
         .name("blink")
         .stack_size(512)
         .priority(TaskPriority(1))
-        .start(move || loop {
-            user_led.toggle();
-            timer.start(500.millis()).unwrap();
-            nb::block!(timer.wait()).unwrap();
-        })
+        .start(move || task_blink::task_blink(user_led))
         .unwrap();
+
+    Task::new()
+        .name("button")
+        .stack_size(512)
+        .priority(TaskPriority(1))
+        .start(move || task_button::task_button(user_button))
+        .unwrap();
+
+    unsafe { task_blink::BLINK_Q = Some(Queue::new(5).unwrap()) };
 
     FreeRtosUtils::start_scheduler();
 }
