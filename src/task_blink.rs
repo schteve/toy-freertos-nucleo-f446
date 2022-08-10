@@ -1,7 +1,6 @@
 use freertos_rust::{Duration, Queue};
 use nucleo_f446re::led::LedDigital;
 
-#[allow(dead_code)] // TODO: remove
 #[derive(Clone, Copy)]
 pub enum BlinkMsg {
     Off,
