@@ -1,5 +1,4 @@
-use crate::task_blink::{BlinkMsg, BLINK_Q};
-use freertos_rust::Duration;
+use crate::{msg::Msg, router::Route, task_blink::BlinkMsg};
 use nucleo_f446re::button::Button;
 
 pub fn task_button(user_button: Button) -> ! {
@@ -9,8 +8,7 @@ pub fn task_button(user_button: Button) -> ! {
         if current != pressed {
             pressed = current;
             if pressed {
-                let q = unsafe { BLINK_Q.as_ref().unwrap() };
-                q.send(BlinkMsg::Toggle, Duration::zero()).unwrap();
+                Route::msg_send(Msg::Blink(BlinkMsg::Toggle), 0); // TODO: don't use integers to identify other tasks
             }
         }
     }

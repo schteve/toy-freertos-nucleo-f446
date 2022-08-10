@@ -6,11 +6,14 @@
 
 use core::alloc::Layout;
 use cortex_m_rt::{entry, exception};
-use freertos_rust::*;
+use freertos_rust::{FreeRtosAllocator, FreeRtosCharPtr, FreeRtosTaskHandle};
 use nucleo_f446re::{button::Button, led::LedDigital, serial::SerialPort};
 use panic_probe as _;
+use router::RouterBuilder;
 use stm32f4xx_hal::prelude::*;
 
+mod msg;
+mod router;
 mod task_blink;
 mod task_button;
 mod task_terminal;
@@ -39,31 +42,15 @@ fn main() -> ! {
     let vcom = SerialPort::new(gpioa.pa2, gpioa.pa3, dp.USART2, &clocks);
 
     // Create tasks
-    Task::new()
-        .name("blink")
-        .stack_size(512)
-        .priority(TaskPriority(1))
-        .start(move || task_blink::task_blink(user_led))
-        .unwrap();
-
-    Task::new()
-        .name("button")
-        .stack_size(512)
-        .priority(TaskPriority(1))
-        .start(move || task_button::task_button(user_button))
-        .unwrap();
-
-    Task::new()
-        .name("terminal")
-        .stack_size(512)
-        .priority(TaskPriority(1))
-        .start(move || task_terminal::task_terminal(vcom))
-        .unwrap();
-
-    // Create queues
-    unsafe { task_blink::BLINK_Q = Some(Queue::new(5).unwrap()) };
-
-    FreeRtosUtils::start_scheduler();
+    RouterBuilder::new()
+        .install_task("blink", 512, 1, move || task_blink::task_blink(user_led))
+        .install_task("button", 512, 1, move || {
+            task_button::task_button(user_button)
+        })
+        .install_task("terminal", 512, 1, move || {
+            task_terminal::task_terminal(vcom)
+        })
+        .start();
 }
 
 // Define what happens in an Out Of Memory (OOM) condition

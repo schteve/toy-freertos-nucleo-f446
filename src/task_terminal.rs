@@ -1,6 +1,5 @@
-use crate::task_blink::{BlinkMsg, BLINK_Q};
+use crate::{msg::Msg, router::Route, task_blink::BlinkMsg};
 use core::{fmt::Write, str};
-use freertos_rust::Duration;
 use nucleo_f446re::serial::SerialPort;
 use stm32f4xx_hal::{block, prelude::*};
 
@@ -46,22 +45,18 @@ pub fn task_terminal(vcom: SerialPort) -> ! {
                         Ok(s) => {
                             match s {
                                 "blinky on" => {
-                                    let q = unsafe { BLINK_Q.as_ref().unwrap() };
-                                    q.send(BlinkMsg::On, Duration::zero()).unwrap();
+                                    Route::msg_send(Msg::Blink(BlinkMsg::On), 0); // TODO: don't use integers to identify other tasks
 
                                     tx.write_str("\r\nYou light up the room.").unwrap();
                                 }
                                 "blinky off" => {
-                                    let q = unsafe { BLINK_Q.as_ref().unwrap() };
-                                    q.send(BlinkMsg::Off, Duration::zero()).unwrap();
-
+                                    Route::msg_send(Msg::Blink(BlinkMsg::Off), 0); // TODO: don't use integers to identify other tasks
                                     tx
                                         .write_str("\r\nIt is pitch black. You are likely to be eaten by a grue.")
                                         .unwrap();
                                 }
                                 "blinky toggle" => {
-                                    let q = unsafe { BLINK_Q.as_ref().unwrap() };
-                                    q.send(BlinkMsg::Toggle, Duration::zero()).unwrap();
+                                    Route::msg_send(Msg::Blink(BlinkMsg::Toggle), 0); // TODO: don't use integers to identify other tasks
 
                                     tx
                                         .write_str("\r\nJust keep flipping the switch till something works out.")
