@@ -1,8 +1,8 @@
-use crate::msg::Msg;
-use freertos_rust::{
-    Duration, FreeRtosBaseType, FreeRtosError, FreeRtosTaskHandle, FreeRtosUBaseType,
-    FreeRtosUtils, Queue, Task, TaskPriority,
+use crate::{
+    freertos_ext::{get_task_id, set_task_id},
+    msg::Msg,
 };
+use freertos_rust::{Duration, FreeRtosUtils, Queue, Task, TaskPriority};
 
 const NUM_TASKS: usize = 3; // TODO: somehow make the number of tasks come from outside this file so the user can configure it
 const QUEUE_DEPTH: usize = 5; // TODO: this used to be a const generic but moved it here till the NUM_TASKS is solved. Could also be task-specific.
@@ -70,36 +70,4 @@ impl<const N: usize> Router<N> {
         let task_id = get_task_id(None).unwrap() as usize - 1;
         router.0[task_id].receive(Duration::infinite()).unwrap()
     }
-}
-
-fn task_handle(task: Option<Task>) -> FreeRtosTaskHandle {
-    let task = if let Some(t) = task {
-        t
-    } else {
-        Task::current().unwrap()
-    };
-    unsafe { *(&task as *const _ as *const FreeRtosTaskHandle) } // Yuck. There's no way to get at the task handle otherwise.
-}
-
-fn get_task_id(task: Option<Task>) -> Result<FreeRtosBaseType, FreeRtosError> {
-    let task_handle = task_handle(task);
-    let task_id = unsafe { freertos_rs_uxTaskGetTaskNumber(task_handle) };
-    if task_id == 0 {
-        Err(FreeRtosError::TaskNotFound)
-    } else {
-        Ok(task_id)
-    }
-}
-
-fn set_task_id(task: Option<Task>, value: FreeRtosUBaseType) {
-    let task_handle = task_handle(task);
-    unsafe { freertos_rs_vTaskSetTaskNumber(task_handle, value) };
-}
-
-extern "C" {
-    pub fn freertos_rs_uxTaskGetTaskNumber(task_handle: FreeRtosTaskHandle) -> FreeRtosBaseType;
-    pub fn freertos_rs_vTaskSetTaskNumber(
-        task_handle: FreeRtosTaskHandle,
-        value: FreeRtosUBaseType,
-    );
 }

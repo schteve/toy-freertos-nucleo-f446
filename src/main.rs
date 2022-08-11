@@ -12,6 +12,7 @@ use panic_probe as _;
 use router::RouterBuilder;
 use stm32f4xx_hal::prelude::*;
 
+mod freertos_ext;
 mod msg;
 mod router;
 mod task_blink;
