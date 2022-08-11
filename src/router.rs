@@ -6,6 +6,7 @@ use freertos_rust::{Duration, FreeRtosUtils, Queue, Task, TaskPriority};
 
 const NUM_TASKS: usize = 3; // TODO: somehow make the number of tasks come from outside this file so the user can configure it
 const QUEUE_DEPTH: usize = 5; // TODO: this used to be a const generic but moved it here till the NUM_TASKS is solved. Could also be task-specific.
+const MAX_MESSAGES: usize = 10; // TODO: since `core::mem::variant_count()` isn't stable / const yet I don't know a good way to allocate an array that matches the number of enum variants
 
 static mut ROUTER: Option<Router<NUM_TASKS>> = None;
 
@@ -48,26 +49,52 @@ impl RouterBuilder {
     }
 
     pub fn start(self) -> ! {
-        let router = Router::<NUM_TASKS>(self.queues.map(Option::unwrap));
+        let router = Router::new(self.queues.map(Option::unwrap));
         unsafe { ROUTER = Some(router) };
 
         FreeRtosUtils::start_scheduler();
     }
 }
 
-pub struct Router<const N: usize>([Queue<Msg>; N]);
+pub struct Router<const N: usize> {
+    queues: [Queue<Msg>; N],
+    subs: [u32; MAX_MESSAGES],
+}
 
 impl<const N: usize> Router<N> {
-    pub fn msg_send(msg: Msg, to_task_id: usize) {
-        assert!(to_task_id < N);
+    fn new(queues: [Queue<Msg>; N]) -> Self {
+        assert!(N <= 32); // Only 32 bits are allocated to track which tasks are subscribed
+        Self {
+            queues,
+            subs: [0; MAX_MESSAGES],
+        }
+    }
 
+    pub fn subscribe(msg: Msg) {
+        // TODO: is there a better way to specify this? I would rather subscribe using e.g. Msg::Blink or Msg::Blink(_).
+        // Maybe impl Default on sub-messages and use a macro somehow? But that might add a lot of code space.
+
+        let router = unsafe { ROUTER.as_mut().unwrap() };
+        let msg_id = msg.id();
+        let task_id = get_task_id(None).unwrap() as usize - 1;
+        router.subs[msg_id] |= 1 << task_id;
+    }
+
+    pub fn msg_send(msg: Msg) {
         let router = unsafe { ROUTER.as_ref().unwrap() };
-        router.0[to_task_id].send(msg, Duration::zero()).unwrap();
+        let msg_id = msg.id();
+        for task_id in 0..N {
+            if router.subs[msg_id] & (1 << task_id) != 0 {
+                router.queues[task_id].send(msg, Duration::zero()).unwrap();
+            }
+        }
     }
 
     pub fn msg_rcv() -> Msg {
         let router = unsafe { ROUTER.as_ref().unwrap() };
         let task_id = get_task_id(None).unwrap() as usize - 1;
-        router.0[task_id].receive(Duration::infinite()).unwrap()
+        router.queues[task_id]
+            .receive(Duration::infinite())
+            .unwrap()
     }
 }

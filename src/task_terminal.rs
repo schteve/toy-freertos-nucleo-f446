@@ -45,18 +45,18 @@ pub fn task_terminal(vcom: SerialPort) -> ! {
                         Ok(s) => {
                             match s {
                                 "blinky on" => {
-                                    Route::msg_send(Msg::Blink(BlinkMsg::On), 0); // TODO: don't use integers to identify other tasks
+                                    Route::msg_send(Msg::Blink(BlinkMsg::On));
 
                                     tx.write_str("\r\nYou light up the room.").unwrap();
                                 }
                                 "blinky off" => {
-                                    Route::msg_send(Msg::Blink(BlinkMsg::Off), 0); // TODO: don't use integers to identify other tasks
+                                    Route::msg_send(Msg::Blink(BlinkMsg::Off));
                                     tx
                                         .write_str("\r\nIt is pitch black. You are likely to be eaten by a grue.")
                                         .unwrap();
                                 }
                                 "blinky toggle" => {
-                                    Route::msg_send(Msg::Blink(BlinkMsg::Toggle), 0); // TODO: don't use integers to identify other tasks
+                                    Route::msg_send(Msg::Blink(BlinkMsg::Toggle));
 
                                     tx
                                         .write_str("\r\nJust keep flipping the switch till something works out.")

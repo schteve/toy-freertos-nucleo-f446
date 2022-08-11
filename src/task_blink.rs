@@ -9,6 +9,8 @@ pub enum BlinkMsg {
 }
 
 pub fn task_blink(mut user_led: LedDigital) -> ! {
+    Route::subscribe(Msg::Blink(BlinkMsg::Off));
+
     loop {
         match Route::msg_rcv() {
             Msg::Blink(x) => match x {

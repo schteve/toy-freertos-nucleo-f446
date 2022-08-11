@@ -8,7 +8,7 @@ pub fn task_button(user_button: Button) -> ! {
         if current != pressed {
             pressed = current;
             if pressed {
-                Route::msg_send(Msg::Blink(BlinkMsg::Toggle), 0); // TODO: don't use integers to identify other tasks
+                Route::msg_send(Msg::Blink(BlinkMsg::Toggle));
             }
         }
     }
