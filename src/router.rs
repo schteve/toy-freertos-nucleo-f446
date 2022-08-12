@@ -2,9 +2,11 @@ use crate::{
     freertos_ext::{get_task_id, set_task_id},
     msg::Msg,
 };
-use freertos_rust::{Duration, FreeRtosUtils, Queue, Task, TaskPriority};
+use freertos_rust::{
+    Duration, FreeRtosError, FreeRtosUtils, InterruptContext, Queue, Task, TaskPriority,
+};
 
-const NUM_TASKS: usize = 3; // TODO: somehow make the number of tasks come from outside this file so the user can configure it
+const NUM_TASKS: usize = 4; // TODO: somehow make the number of tasks come from outside this file so the user can configure it
 const QUEUE_DEPTH: usize = 5; // TODO: this used to be a const generic but moved it here till the NUM_TASKS is solved. Could also be task-specific.
 const MAX_MESSAGES: usize = 10; // TODO: since `core::mem::variant_count()` isn't stable / const yet I don't know a good way to allocate an array that matches the number of enum variants
 
@@ -49,6 +51,8 @@ impl RouterBuilder {
     }
 
     pub fn start(self) -> ! {
+        assert_eq!(FreeRtosUtils::get_number_of_tasks(), NUM_TASKS);
+
         let router = Router::new(self.queues.map(Option::unwrap));
         unsafe { ROUTER = Some(router) };
 
@@ -85,7 +89,24 @@ impl<const N: usize> Router<N> {
         let msg_id = msg.id();
         for task_id in 0..N {
             if router.subs[msg_id] & (1 << task_id) != 0 {
-                router.queues[task_id].send(msg, Duration::zero()).unwrap();
+                router.queues[task_id]
+                    .send(msg, Duration::infinite())
+                    .unwrap();
+            }
+        }
+    }
+
+    pub fn msg_send_isr(msg: Msg) {
+        let router = unsafe { ROUTER.as_ref().unwrap() };
+        let msg_id = msg.id();
+
+        let mut isr_context = InterruptContext::new();
+        for task_id in 0..N {
+            if router.subs[msg_id] & (1 << task_id) != 0 {
+                let result = router.queues[task_id].send_from_isr(&mut isr_context, msg);
+                if matches!(result, Err(FreeRtosError::QueueFull)) {
+                    panic!("Task {task_id} queue full");
+                }
             }
         }
     }
@@ -97,4 +118,16 @@ impl<const N: usize> Router<N> {
             .receive(Duration::infinite())
             .unwrap()
     }
+
+    pub fn msg_rcv_nonblocking() -> Option<Msg> {
+        let router = unsafe { ROUTER.as_ref().unwrap() };
+        let task_id = get_task_id(None).unwrap() as usize - 1;
+        router.queues[task_id].receive(Duration::zero()).ok()
+    }
+}
+
+#[allow(non_snake_case)]
+#[no_mangle]
+fn vApplicationTickHook() {
+    Route::msg_send_isr(Msg::Kick);
 }

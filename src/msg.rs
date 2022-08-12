@@ -1,8 +1,10 @@
-use crate::task_blink::BlinkMsg;
+use crate::{task_blink::BlinkMsg, task_button::ButtonMsg};
 
 #[derive(Clone, Copy)]
 pub enum Msg {
+    Kick,
     Blink(BlinkMsg),
+    Button(ButtonMsg),
 }
 
 impl Msg {
@@ -19,7 +21,9 @@ impl Msg {
     // This function manually achieves a C-style value for each enum element.
     pub fn id(&self) -> usize {
         match self {
-            Self::Blink(_) => 0,
+            Self::Kick => 0,
+            Self::Blink(_) => 1,
+            Self::Button(_) => 2,
         }
     }
 }

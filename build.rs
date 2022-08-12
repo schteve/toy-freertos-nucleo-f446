@@ -43,4 +43,6 @@ fn main() {
     cc.file("src/local_shim.c");
 
     b.compile().unwrap_or_else(|e| panic!("{}", e.to_string()));
+
+    println!("cargo:rerun-if-changed=FreeRTOSConfig.h");
 }

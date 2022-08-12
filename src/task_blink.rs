@@ -8,16 +8,17 @@ pub enum BlinkMsg {
     Toggle,
 }
 
+// This task is responsible for blinking the LED as commanded
 pub fn task_blink(mut user_led: LedDigital) -> ! {
     Route::subscribe(Msg::Blink(BlinkMsg::Off));
 
     loop {
-        match Route::msg_rcv() {
-            Msg::Blink(x) => match x {
+        if let Msg::Blink(x) = Route::msg_rcv() {
+            match x {
                 BlinkMsg::Off => user_led.off(),
                 BlinkMsg::On => user_led.on(),
                 BlinkMsg::Toggle => user_led.toggle(),
-            },
+            }
         }
     }
 }

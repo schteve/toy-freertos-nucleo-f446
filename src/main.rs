@@ -17,6 +17,7 @@ mod msg;
 mod router;
 mod task_blink;
 mod task_button;
+mod task_controller;
 mod task_terminal;
 
 #[global_allocator]
@@ -48,6 +49,9 @@ fn main() -> ! {
         .install_task("button", 512, 1, move || {
             task_button::task_button(user_button)
         })
+        .install_task("controller", 512, 2, move || {
+            task_controller::task_controller()
+        })
         .install_task("terminal", 512, 1, move || {
             task_terminal::task_terminal(vcom)
         })
@@ -69,7 +73,9 @@ unsafe fn DefaultHandler(irqn: i16) -> ! {
 
 #[allow(non_snake_case)]
 #[no_mangle]
-fn vApplicationMallocFailedHook() {}
+fn vApplicationMallocFailedHook() {
+    panic!("Malloc failed");
+}
 
 #[allow(non_snake_case)]
 #[no_mangle]
@@ -77,8 +83,6 @@ fn vApplicationIdleHook() {}
 
 #[allow(non_snake_case)]
 #[no_mangle]
-fn vApplicationStackOverflowHook(_pxTask: FreeRtosTaskHandle, _pcTaskName: FreeRtosCharPtr) {}
-
-#[allow(non_snake_case)]
-#[no_mangle]
-fn vApplicationTickHook() {}
+fn vApplicationStackOverflowHook(_pxTask: FreeRtosTaskHandle, _pcTaskName: FreeRtosCharPtr) {
+    panic!("Stack overflow");
+}
