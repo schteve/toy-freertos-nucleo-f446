@@ -15,6 +15,7 @@ use stm32f4xx_hal::prelude::*;
 mod freertos_ext;
 mod msg;
 mod router;
+mod serial_nb;
 mod task_blink;
 mod task_button;
 mod task_controller;

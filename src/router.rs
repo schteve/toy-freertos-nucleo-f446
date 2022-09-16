@@ -119,6 +119,7 @@ impl<const N: usize> Router<N> {
             .unwrap()
     }
 
+    #[allow(dead_code)]
     pub fn msg_rcv_nonblocking() -> Option<Msg> {
         let router = unsafe { ROUTER.as_ref().unwrap() };
         let task_id = get_task_id(None).unwrap() as usize - 1;
