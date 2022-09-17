@@ -6,7 +6,11 @@ pub fn task_handle(task: Option<Task>) -> FreeRtosTaskHandle {
     } else {
         Task::current().unwrap()
     };
-    unsafe { *(&task as *const _ as *const FreeRtosTaskHandle) } // Yuck. There's no way to get at the task handle otherwise.
+
+    // Yuck. There's no way to get at the task handle otherwise.
+    let pointer: *const Task = &task;
+    let pointer = pointer.cast::<FreeRtosTaskHandle>();
+    unsafe { *pointer }
 }
 
 pub fn get_task_id(task: Option<Task>) -> Result<FreeRtosBaseType, FreeRtosError> {

@@ -2,6 +2,7 @@ use crate::{
     freertos_ext::{get_task_id, set_task_id},
     msg::Msg,
 };
+use core::convert::TryInto;
 use freertos_rust::{
     Duration, FreeRtosError, FreeRtosUtils, InterruptContext, Queue, Task, TaskPriority,
 };
@@ -14,6 +15,7 @@ static mut ROUTER: Option<Router<NUM_TASKS>> = None;
 
 pub type Route = Router<NUM_TASKS>;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct RouterBuilder {
     queues: [Option<Queue<Msg>>; NUM_TASKS],
     count: usize,
@@ -45,7 +47,7 @@ impl RouterBuilder {
         self.queues[self.count] = Some(q);
         self.count += 1;
 
-        set_task_id(Some(t), self.count as u32); // Intentionally 1-based
+        set_task_id(Some(t), self.count.try_into().unwrap()); // Intentionally 1-based
 
         self
     }
@@ -80,7 +82,7 @@ impl<const N: usize> Router<N> {
 
         let router = unsafe { ROUTER.as_mut().unwrap() };
         let msg_id = msg.id();
-        let task_id = get_task_id(None).unwrap() as usize - 1;
+        let task_id = Self::get_current_task_id();
         router.subs[msg_id] |= 1 << task_id;
     }
 
@@ -113,7 +115,7 @@ impl<const N: usize> Router<N> {
 
     pub fn msg_rcv() -> Msg {
         let router = unsafe { ROUTER.as_ref().unwrap() };
-        let task_id = get_task_id(None).unwrap() as usize - 1;
+        let task_id = Self::get_current_task_id();
         router.queues[task_id]
             .receive(Duration::infinite())
             .unwrap()
@@ -122,8 +124,14 @@ impl<const N: usize> Router<N> {
     #[allow(dead_code)]
     pub fn msg_rcv_nonblocking() -> Option<Msg> {
         let router = unsafe { ROUTER.as_ref().unwrap() };
-        let task_id = get_task_id(None).unwrap() as usize - 1;
+        let task_id = Self::get_current_task_id();
         router.queues[task_id].receive(Duration::zero()).ok()
+    }
+
+    fn get_current_task_id() -> usize {
+        // Task ID's are 1-based
+        let id = get_task_id(None).unwrap() - 1;
+        id.try_into().unwrap()
     }
 }
 

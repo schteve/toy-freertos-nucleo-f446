@@ -88,9 +88,7 @@ pub fn task_terminal(vcom: SerialPort) -> ! {
                         clear = true;
                     } else if c == b'\x08' || c == b'\x7F' {
                         // Backspace
-                        if line_idx > 0 {
-                            line_idx -= 1;
-                        }
+                        line_idx = line_idx.saturating_sub(1);
                         line[line_idx] = 0;
                     } else {
                         // Anything else

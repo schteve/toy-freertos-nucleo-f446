@@ -8,6 +8,7 @@ pub enum ButtonMsg {
 }
 
 // This task is responsible for reporting when the button is pressed
+#[allow(clippy::needless_pass_by_value)]
 pub fn task_button(user_button: Button) -> ! {
     Route::subscribe(Msg::Kick);
 

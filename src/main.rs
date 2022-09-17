@@ -36,13 +36,13 @@ fn main() -> ! {
         .hclk(180.MHz())
         .freeze();
 
-    let gpioa = dp.GPIOA.split();
-    let gpioc = dp.GPIOC.split();
+    let gpio_a = dp.GPIOA.split();
+    let gpio_c = dp.GPIOC.split();
 
-    let user_led = LedDigital::new(gpioa.pa5);
-    let user_button = Button::new(gpioc.pc13);
+    let user_led = LedDigital::new(gpio_a.pa5);
+    let user_button = Button::new(gpio_c.pc13);
     let _timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescaler would need to be too large
-    let vcom = SerialPort::new(gpioa.pa2, gpioa.pa3, dp.USART2, &clocks);
+    let vcom = SerialPort::new(gpio_a.pa2, gpio_a.pa3, dp.USART2, &clocks);
 
     // Create tasks
     RouterBuilder::new()

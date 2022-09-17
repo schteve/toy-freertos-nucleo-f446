@@ -19,7 +19,7 @@ impl Msg {
     //      that this wouldn't be UB anyway. Also: is discriminant always 32 bits on all machines?
     //
     // This function manually achieves a C-style value for each enum element.
-    pub fn id(&self) -> usize {
+    pub fn id(self) -> usize {
         match self {
             Self::Kick => 0,
             Self::Blink(_) => 1,
