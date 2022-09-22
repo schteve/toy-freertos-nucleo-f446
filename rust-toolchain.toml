@@ -1,5 +1,5 @@
 [toolchain]
-channel = "nightly-2022-07-22"
+channel = "nightly"
 components = ["rustfmt", "clippy"]
 targets = ["thumbv7em-none-eabi"]
 profile = "minimal"
