@@ -4,7 +4,10 @@
 #![feature(lang_items)]
 #![feature(alloc_error_handler)]
 
-use core::alloc::Layout;
+use core::{
+    alloc::Layout,
+    ffi::{c_char, CStr},
+};
 use cortex_m_rt::{entry, exception};
 use freertos_rust::{FreeRtosAllocator, FreeRtosCharPtr, FreeRtosTaskHandle};
 use nucleo_f446re::{button::Button, led::LedDigital, serial::SerialPort};
@@ -84,6 +87,7 @@ fn vApplicationIdleHook() {}
 
 #[allow(non_snake_case)]
 #[no_mangle]
-fn vApplicationStackOverflowHook(_pxTask: FreeRtosTaskHandle, _pcTaskName: FreeRtosCharPtr) {
-    panic!("Stack overflow");
+fn vApplicationStackOverflowHook(_pxTask: FreeRtosTaskHandle, pcTaskName: FreeRtosCharPtr) {
+    let name = unsafe { CStr::from_ptr(pcTaskName as *const c_char) };
+    panic!("Stack overflow in task {name:?}");
 }
