@@ -11,7 +11,7 @@ const NUM_TASKS: usize = 4; // TODO: somehow make the number of tasks come from 
 const QUEUE_DEPTH: usize = 5; // TODO: this used to be a const generic but moved it here till the NUM_TASKS is solved. Could also be task-specific.
 const MAX_MESSAGES: usize = 10; // TODO: since `core::mem::variant_count()` isn't stable / const yet I don't know a good way to allocate an array that matches the number of enum variants
 
-static mut ROUTER: Option<Router<NUM_TASKS>> = None;
+static mut ROUTER: Option<Router<NUM_TASKS>> = None; // This is definitely not thread safe
 
 pub type Route = Router<NUM_TASKS>;
 
@@ -32,7 +32,7 @@ impl RouterBuilder {
 
     pub fn install_task<F>(mut self, name: &str, stack_size: u16, priority: u8, task: F) -> Self
     where
-        F: FnOnce() + Send + 'static,
+        F: FnOnce(Task) + Send + 'static,
     {
         assert!(self.count < NUM_TASKS);
 

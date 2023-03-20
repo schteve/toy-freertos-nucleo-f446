@@ -1,13 +1,7 @@
 #![no_main]
 #![no_std]
-// For allocator
-#![feature(lang_items)]
-#![feature(alloc_error_handler)]
 
-use core::{
-    alloc::Layout,
-    ffi::{c_char, CStr},
-};
+use core::ffi::{c_char, CStr};
 use cortex_m_rt::{entry, exception};
 use freertos_rust::{FreeRtosAllocator, FreeRtosCharPtr, FreeRtosTaskHandle};
 use nucleo_f446re::{button::Button, led::LedDigital, serial::SerialPort};
@@ -49,23 +43,17 @@ fn main() -> ! {
 
     // Create tasks
     RouterBuilder::new()
-        .install_task("blink", 512, 1, move || task_blink::task_blink(user_led))
-        .install_task("button", 512, 1, move || {
+        .install_task("blink", 512, 1, move |_| task_blink::task_blink(user_led))
+        .install_task("button", 512, 1, move |_| {
             task_button::task_button(user_button)
         })
-        .install_task("controller", 512, 2, move || {
+        .install_task("controller", 512, 2, move |_| {
             task_controller::task_controller()
         })
-        .install_task("terminal", 512, 1, move || {
+        .install_task("terminal", 512, 1, move |_| {
             task_terminal::task_terminal(vcom)
         })
         .start();
-}
-
-// Define what happens in an Out Of Memory (OOM) condition
-#[alloc_error_handler]
-fn alloc_error(layout: Layout) -> ! {
-    panic!("Alloc error, size: {}", layout.size());
 }
 
 #[allow(clippy::empty_loop)]
