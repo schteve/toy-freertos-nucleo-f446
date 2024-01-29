@@ -1,7 +1,6 @@
 #![no_main]
 #![no_std]
 // For allocator
-#![feature(lang_items)]
 #![feature(alloc_error_handler)]
 
 use core::{
@@ -15,7 +14,6 @@ use panic_probe as _;
 use router::RouterBuilder;
 use stm32f4xx_hal::prelude::*;
 
-mod freertos_ext;
 mod msg;
 mod router;
 mod serial_nb;
@@ -45,18 +43,20 @@ fn main() -> ! {
     let user_led = LedDigital::new(gpio_a.pa5);
     let user_button = Button::new(gpio_c.pc13);
     let _timer = dp.TIM5.counter_us(&clocks); // counter_ms would cause an error because the prescaler would need to be too large
-    let vcom = SerialPort::new(gpio_a.pa2, gpio_a.pa3, dp.USART2, &clocks);
+    let vcom = SerialPort::new(gpio_a.pa2, gpio_a.pa3, dp.USART2, &clocks, 9600.bps()).unwrap();
 
     // Create tasks
     RouterBuilder::new()
-        .install_task("blink", 512, 1, move || task_blink::task_blink(user_led))
-        .install_task("button", 512, 1, move || {
+        .install_task("blink", 512, 1, move |_task| {
+            task_blink::task_blink(user_led)
+        })
+        .install_task("button", 512, 1, move |_task| {
             task_button::task_button(user_button)
         })
-        .install_task("controller", 512, 2, move || {
+        .install_task("controller", 512, 2, move |_task| {
             task_controller::task_controller()
         })
-        .install_task("terminal", 512, 1, move || {
+        .install_task("terminal", 512, 1, move |_task| {
             task_terminal::task_terminal(vcom)
         })
         .start();

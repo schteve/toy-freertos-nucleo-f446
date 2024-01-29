@@ -39,9 +39,6 @@ fn main() {
     b.heap::<String>("heap_4.c".to_string()); // Set the heap_?.c allocator to use from
                                               // 'FreeRTOS-Kernel/portable/MemMang' (Default: heap_4.c)
 
-    let cc = b.get_cc();
-    cc.file("src/local_shim.c");
-
     b.compile().unwrap_or_else(|e| panic!("{}", e.to_string()));
 
     println!("cargo:rerun-if-changed=FreeRTOSConfig.h");

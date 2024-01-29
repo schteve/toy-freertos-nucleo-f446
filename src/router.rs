@@ -1,7 +1,4 @@
-use crate::{
-    freertos_ext::{get_task_id, set_task_id},
-    msg::Msg,
-};
+use crate::msg::Msg;
 use core::convert::TryInto;
 use freertos_rust::{
     Duration, FreeRtosError, FreeRtosUtils, InterruptContext, Queue, Task, TaskPriority,
@@ -32,11 +29,11 @@ impl RouterBuilder {
 
     pub fn install_task<F>(mut self, name: &str, stack_size: u16, priority: u8, task: F) -> Self
     where
-        F: FnOnce() + Send + 'static,
+        F: FnOnce(Task) + Send + 'static,
     {
         assert!(self.count < NUM_TASKS);
 
-        let t = Task::new()
+        let mut t = Task::new()
             .name(name)
             .stack_size(stack_size)
             .priority(TaskPriority(priority))
@@ -47,7 +44,7 @@ impl RouterBuilder {
         self.queues[self.count] = Some(q);
         self.count += 1;
 
-        set_task_id(Some(t), self.count.try_into().unwrap()); // Intentionally 1-based
+        t.set_id(self.count.try_into().unwrap()); // Intentionally 1-based
 
         self
     }
@@ -130,7 +127,7 @@ impl<const N: usize> Router<N> {
 
     fn get_current_task_id() -> usize {
         // Task ID's are 1-based
-        let id = get_task_id(None).unwrap() - 1;
+        let id = Task::current().unwrap().get_id().unwrap() - 1;
         id.try_into().unwrap()
     }
 }
